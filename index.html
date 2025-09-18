@@ -19,7 +19,7 @@
             text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
             display: flex;
             flex-direction: column;
-            justify-content: flex-end;
+            justify-content: center;
             background-size: cover;
             background-position: center;
             transition: background-image 1s ease-in-out;
@@ -40,30 +40,44 @@
         .info-container {
             position: relative;
             z-index: 1;
-            padding: 30px;
-            max-width: 800px;
-            margin: 0 auto;
+            padding: 0 20px;
+            max-width: 600px;
+            margin: auto;
             width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 32px;
         }
         
         .title {
-            font-size: 2.2rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-            line-height: 1.2;
+            font-size: 3.2rem;
+            font-weight: 200;
+            margin-bottom: 0;
+            line-height: 1.1;
+            letter-spacing: 2.5px;
+            text-align: center;
+            opacity: 0.5;
         }
         
         .copyright {
-            font-size: 1.2rem;
-            margin-bottom: 15px;
-            opacity: 0.9;
+            font-size: 1rem;
+            margin-bottom: 0;
+            opacity: 0.5;
+            font-weight: 250;
+            letter-spacing: 1px;
+            text-align: center;
         }
         
         .date {
-            font-size: 1rem;
-            opacity: 0.8;
+            font-size: 0.95rem;
+            opacity: 0.5;
+            font-weight: 250;
             display: flex;
             align-items: center;
+            justify-content: center;
+            margin-top: 0;
+            letter-spacing: 1px;
         }
         
         .date i {
@@ -72,7 +86,7 @@
         
         .source {
             position: absolute;
-            bottom: 15px;
+            bottom: 63px;
             right: 15px;
             font-size: 0.8rem;
             opacity: 0.6;
@@ -109,8 +123,8 @@
     <div class="loading" id="loading">正在加载今日壁纸...</div>
     
     <div class="info-container">
-        <h1 class="title" id="wallpaper-title">爱尔兰岛的西端</h1>
-        <p class="copyright" id="wallpaper-copyright">邓金码头的蛇形楼梯, 凯里郡, 爱尔兰 (© Hugh O'Connor/Getty Images)</p>
+        <h1 class="title" id="wallpaper-title">Daily Wallpaper</h1>
+        <p class="copyright" id="wallpaper-copyright">每天都是更好的一天</p>
         <div class="date">
             <i class="fas fa-calendar-alt"></i>
             <span id="current-date">2023年9月18日 星期一</span>
