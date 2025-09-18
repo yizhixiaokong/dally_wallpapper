@@ -1,218 +1,231 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bing每日壁纸</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            height: 100vh;
-            overflow: hidden;
-            color: white;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            background-size: cover;
-            background-position: center;
-            transition: background-image 1s ease-in-out;
-            position: relative;
-        }
-        
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.4) 100%);
-            z-index: 0;
-        }
-        
-        .info-container {
-            position: relative;
-            z-index: 1;
-            padding: 0 20px;
-            max-width: 600px;
-            margin: auto;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 32px;
-        }
-        
-        .title {
-            font-size: 3.2rem;
-            font-weight: 200;
-            margin-bottom: 0;
-            line-height: 1.1;
-            letter-spacing: 2.5px;
-            text-align: center;
-            opacity: 0.6;
-        }
-        
-        .copyright {
-            font-size: 1rem;
-            margin-bottom: 0;
-            opacity: 0.6;
-            font-weight: 250;
-            letter-spacing: 1px;
-            text-align: center;
-        }
-        
-        .date {
-            font-size: 0.95rem;
-            opacity: 0.6;
-            font-weight: 250;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: 0;
-            letter-spacing: 1px;
-        }
-        
-        .date i {
-            margin-right: 8px;
-        }
-        
-        .source {
-            position: absolute;
-            bottom: 58px;
-            right: 15px;
-            font-size: 0.8rem;
-            opacity: 0.6;
-            z-index: 1;
-        }
-        
-        .loading {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 1.2rem;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px 25px;
-            border-radius: 8px;
-            z-index: 10;
-        }
-        
-        /* 壁纸软件优化样式 */
-        .wallpaper-optimized {
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            pointer-events: none;
-        }
-        
-        .wallpaper-optimized .info-container {
-            pointer-events: auto;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        height: 100vh;
+        overflow: hidden;
+        color: white;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7), 0 0 1px #222, 0 0 2px #222;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background-size: cover;
+        background-position: center;
+        transition: background-image 1s ease-in-out;
+        position: relative;
+      }
+
+      body::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.7) 0%,
+          transparent 30%,
+          transparent 70%,
+          rgba(0, 0, 0, 0.4) 100%
+        );
+        z-index: 0;
+      }
+
+      .info-container {
+        position: relative;
+        z-index: 1;
+        padding: 0 20px;
+        max-width: 600px;
+        margin: auto;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 32px;
+      }
+
+      .title {
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), 0 0 2px #222, 0 0 1px #222;
+        font-size: 3.2rem;
+        font-weight: 200;
+        margin-bottom: 0;
+        line-height: 1.1;
+        letter-spacing: 2.5px;
+        text-align: center;
+        opacity: 0.65;
+      }
+
+      .copyright {
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 1px #222;
+        font-size: 1rem;
+        margin-bottom: 0;
+        opacity: 0.65;
+        font-weight: 250;
+        letter-spacing: 1px;
+        text-align: center;
+      }
+
+      .date {
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 1px #222;
+        font-size: 0.95rem;
+        opacity: 0.65;
+        font-weight: 250;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 0;
+        letter-spacing: 1px;
+      }
+
+      .date i {
+        margin-right: 8px;
+      }
+
+      .source {
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 1px #222;
+        position: absolute;
+        bottom: 58px;
+        right: 15px;
+        font-size: 0.8rem;
+        opacity: 0.6;
+        z-index: 1;
+      }
+
+      .loading {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 1.2rem;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 15px 25px;
+        border-radius: 8px;
+        z-index: 10;
+      }
+
+      .wallpaper-optimized {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        pointer-events: none;
+      }
+
+      .wallpaper-optimized .info-container {
+        pointer-events: auto;
+      }
     </style>
-</head>
-<body class="wallpaper-optimized">
+  </head>
+  <body class="wallpaper-optimized">
     <div class="loading" id="loading">正在加载今日壁纸...</div>
-    
+
     <div class="info-container">
-        <h1 class="title" id="wallpaper-title">Daily Wallpaper</h1>
-        <p class="copyright" id="wallpaper-copyright">每天都是更好的一天</p>
-        <div class="date">
-            <i class="fas fa-calendar-alt"></i>
-            <span id="current-date">2023年9月18日 星期一</span>
-        </div>
+      <h1 class="title" id="wallpaper-title">Daily Wallpaper</h1>
+      <p class="copyright" id="wallpaper-copyright">每天都是更好的一天</p>
+      <div class="date">
+        <i class="fas fa-calendar-alt"></i>
+        <span id="current-date">2023年9月18日 星期一</span>
+      </div>
     </div>
-    
+
     <div class="source">每日壁纸由 Microsoft Bing 提供</div>
 
     <script>
-        // 设置当前日期
-        function setCurrentDate() {
-            const now = new Date();
-            const options = { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric', 
-                weekday: 'long' 
-            };
-            document.getElementById('current-date').textContent = now.toLocaleDateString('zh-CN', options);
-        }
-        
-        // 从URL参数获取壁纸数据
-        function getWallpaperFromUrl() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const imageUrl = urlParams.get('image');
-            const title = urlParams.get('title');
-            const copyright = urlParams.get('copyright');
-            
-            if (imageUrl) {
-                document.body.style.backgroundImage = `url('${imageUrl}')`;
-                document.getElementById('loading').style.display = 'none';
-                
-                if (title) {
-                    document.getElementById('wallpaper-title').textContent = decodeURIComponent(title);
-                }
-                
-                if (copyright) {
-                    document.getElementById('wallpaper-copyright').textContent = decodeURIComponent(copyright);
-                }
-                
-                return true;
-            }
-            
-            return false;
-        }
-        
-        // 从GitHub API获取壁纸数据
-        async function loadWallpaperFromAPI() {
-            try {
-                // 这里应该是您的GitHub Pages JSON数据端点
-                const response = await fetch('wallpaper-data.json');
-                const data = await response.json();
-                
-                document.body.style.backgroundImage = `url('${data.url}')`;
-                document.getElementById('wallpaper-title').textContent = data.title;
-                document.getElementById('wallpaper-copyright').textContent = data.copyright;
-                document.getElementById('loading').style.display = 'none';
-                
-            } catch (error) {
-                console.error('获取壁纸数据失败:', error);
-                // 使用默认壁纸作为后备
-                document.body.style.backgroundImage = 'url("https://cn.bing.com/th?id=OHR.ExtremaduraJamon_ZH-CN1559355133_UHD.jpg&rf=LaDigue_UHD.jpg&pid=hp&w=3840&h=2160&rs=1&c=4")';
-                document.getElementById('loading').style.display = 'none';
-            }
-        }
-        
-        // 页面加载时初始化
-        window.onload = function() {
-            setCurrentDate();
-            
-            // 首先尝试从URL参数获取壁纸数据
-            if (!getWallpaperFromUrl()) {
-                // 如果没有URL参数，尝试从API获取
-                loadWallpaperFromAPI();
-            }
-            
-            // 添加淡入效果
-            setTimeout(() => {
-                document.body.style.opacity = 1;
-            }, 300);
+      // 设置当前日期
+      function setCurrentDate() {
+        const now = new Date();
+        const options = {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          weekday: "long",
         };
-        
-        // 初始隐藏页面，加载完成后淡入
-        document.body.style.opacity = 0;
-        document.body.style.transition = 'opacity 0.5s ease-in';
+        document.getElementById("current-date").textContent =
+          now.toLocaleDateString("zh-CN", options);
+      }
+
+      // 从URL参数获取壁纸数据
+      function getWallpaperFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const imageUrl = urlParams.get("image");
+        const title = urlParams.get("title");
+        const copyright = urlParams.get("copyright");
+
+        if (imageUrl) {
+          document.body.style.backgroundImage = `url('${imageUrl}')`;
+          document.getElementById("loading").style.display = "none";
+
+          if (title) {
+            document.getElementById("wallpaper-title").textContent =
+              decodeURIComponent(title);
+          }
+
+          if (copyright) {
+            document.getElementById("wallpaper-copyright").textContent =
+              decodeURIComponent(copyright);
+          }
+
+          return true;
+        }
+
+        return false;
+      }
+
+      // 从GitHub API获取壁纸数据
+      async function loadWallpaperFromAPI() {
+        try {
+          // 这里应该是您的GitHub Pages JSON数据端点
+          const response = await fetch("wallpaper-data.json");
+          const data = await response.json();
+
+          document.body.style.backgroundImage = `url('${data.url}')`;
+          document.getElementById("wallpaper-title").textContent = data.title;
+          document.getElementById("wallpaper-copyright").textContent =
+            data.copyright;
+          document.getElementById("loading").style.display = "none";
+        } catch (error) {
+          console.error("获取壁纸数据失败:", error);
+          // 使用默认壁纸作为后备
+          document.body.style.backgroundImage =
+            'url("https://cn.bing.com/th?id=OHR.ExtremaduraJamon_ZH-CN1559355133_UHD.jpg&rf=LaDigue_UHD.jpg&pid=hp&w=3840&h=2160&rs=1&c=4")';
+          document.getElementById("loading").style.display = "none";
+        }
+      }
+
+      // 页面加载时初始化
+      window.onload = function () {
+        setCurrentDate();
+
+        // 首先尝试从URL参数获取壁纸数据
+        if (!getWallpaperFromUrl()) {
+          // 如果没有URL参数，尝试从API获取
+          loadWallpaperFromAPI();
+        }
+
+        // 添加淡入效果
+        setTimeout(() => {
+          document.body.style.opacity = 1;
+        }, 300);
+      };
+
+      // 初始隐藏页面，加载完成后淡入
+      document.body.style.opacity = 0;
+      document.body.style.transition = "opacity 0.5s ease-in";
     </script>
-    
+
     <!-- 使用Font Awesome图标 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
-</body>
+  </body>
 </html>
