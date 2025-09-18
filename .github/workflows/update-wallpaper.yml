@@ -26,28 +26,48 @@ jobs:
 
     - name: Get Bing Wallpaper URL
 
+      # run: |
+      #   # 获取 Bing API 数据
+      #   # curl -s "https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&uhd=1&uhdwidth=3840&uhdheight=2160" -o bing.json
+      #   curl -s "https://global.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&pid=hp&FORM=BEHPTB&uhd=1&uhdwidth=3840&uhdheight=2160&setmkt=zh-CN&setlang=en" -o bing.json
+      #   # 解析 JSON 获取图片 URL
+      #   URL=$(jq -r '.images[0].url' bing.json)
+      #   FULL_URL="https://cn.bing.com$URL"
+      #   echo "Bing API Response:"
+      #   cat bing.json
+      #   echo "Image URL: $FULL_URL"
+      #   # 转义 FULL_URL 中的特殊字符（& 和 /）
+      #   ESCAPED_URL=$(echo "$FULL_URL" | sed 's/&/\\&/g; s|/|\\/|g')
+      #   # 使用 sed 替换模板中的占位符
+      #   sed "s|IMAGE_URL_PLACEHOLDER|${ESCAPED_URL}|g" index.template > index.html
+      #   echo "Generated index.html:"
+      #   cat index.html
+
+    - name: Generate JSON data
       run: |
         # 获取 Bing API 数据
         # curl -s "https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&uhd=1&uhdwidth=3840&uhdheight=2160" -o bing.json
         curl -s "https://global.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&pid=hp&FORM=BEHPTB&uhd=1&uhdwidth=3840&uhdheight=2160&setmkt=zh-CN&setlang=en" -o bing.json
-        # 解析 JSON 获取图片 URL
-        URL=$(jq -r '.images[0].url' bing.json)
-        FULL_URL="https://cn.bing.com$URL"
-        echo "Bing API Response:"
-        cat bing.json
-        echo "Image URL: $FULL_URL"
-        # 转义 FULL_URL 中的特殊字符（& 和 /）
-        ESCAPED_URL=$(echo "$FULL_URL" | sed 's/&/\\&/g; s|/|\\/|g')
-        # 使用 sed 替换模板中的占位符
-        sed "s|IMAGE_URL_PLACEHOLDER|${ESCAPED_URL}|g" index.template > index.html
-        echo "Generated index.html:"
-        cat index.html
+
+        # 解析Bing API响应
+        TITLE=$(jq -r '.images[0].title' bing.json)
+        COPYRIGHT=$(jq -r '.images[0].copyright' bing.json)
+        URL="https://cn.bing.com$(jq -r '.images[0].url' bing.json)"
+        
+        # 创建JSON数据
+        echo '{
+          "title": "'$TITLE'",
+          "copyright": "'$COPYRIGHT'",
+          "url": "'$URL'",
+          "date": "'$(date +%Y-%m-%d)'"
+    }' > wallpaper-data.json
 
     - name: Commit and push changes
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         
-        git add index.html
+        # git add index.html
+        git add wallpaper-data.json
         git diff --staged --quiet || git commit -m "🔄 Update Bing wallpaper redirect - $(date +'%Y-%m-%d %H:%M')"
         git push
