@@ -60,7 +60,7 @@ jobs:
           "copyright": "'$COPYRIGHT'",
           "url": "'$URL'",
           "date": "'$(date +%Y-%m-%d)'"
-    }' > wallpaper-data.json
+        }' > wallpaper-data.json
 
     - name: Commit and push changes
       run: |
