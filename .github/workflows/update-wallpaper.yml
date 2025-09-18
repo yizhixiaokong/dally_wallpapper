@@ -24,8 +24,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y curl jq
 
-    - name: Get Bing Wallpaper URL
-
+    # - name: Get Bing Wallpaper URL
       # run: |
       #   # 获取 Bing API 数据
       #   # curl -s "https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&uhd=1&uhdwidth=3840&uhdheight=2160" -o bing.json
