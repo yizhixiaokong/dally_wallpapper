@@ -25,28 +25,18 @@ jobs:
         sudo apt-get install -y curl jq
 
     - name: Get Bing Wallpaper URL
+
       run: |
         # 获取 Bing API 数据
         curl -s "https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&uhd=1&uhdwidth=3840&uhdheight=2160" -o bing.json
-        
         # 解析 JSON 获取图片 URL
         URL=$(jq -r '.images[0].url' bing.json)
         FULL_URL="https://cn.bing.com$URL"
-        
-        # 输出调试信息
         echo "Bing API Response:"
         cat bing.json
         echo "Image URL: $FULL_URL"
-        
-        # 将 URL 存入环境变量
-        echo "IMAGE_URL=$FULL_URL" >> $GITHUB_ENV
-
-    - name: Update HTML file
-      run: |
         # 使用 sed 替换模板中的占位符
-        sed "s|IMAGE_URL_PLACEHOLDER|$IMAGE_URL|g" index.template > index.html
-        
-        # 输出生成的文件内容（用于调试）
+        sed "s|IMAGE_URL_PLACEHOLDER|$FULL_URL|g" index.template > index.html
         echo "Generated index.html:"
         cat index.html
 
