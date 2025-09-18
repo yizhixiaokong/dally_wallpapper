@@ -35,8 +35,10 @@ jobs:
         echo "Bing API Response:"
         cat bing.json
         echo "Image URL: $FULL_URL"
+        # 转义 FULL_URL 中的特殊字符（& 和 /）
+        ESCAPED_URL=$(echo "$FULL_URL" | sed 's/&/\\&/g; s|/|\\/|g')
         # 使用 sed 替换模板中的占位符
-        sed "s|IMAGE_URL_PLACEHOLDER|${FULL_URL}|g" index.template > index.html
+        sed "s|IMAGE_URL_PLACEHOLDER|${ESCAPED_URL}|g" index.template > index.html
         echo "Generated index.html:"
         cat index.html
 
