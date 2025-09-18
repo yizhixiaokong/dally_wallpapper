@@ -1,0 +1,60 @@
+name: Update Bing Wallpaper Redirect
+
+on:
+  schedule:
+    - cron: '0 8 * * *'  # 每天 UTC 时间 08:00 运行（北京时间 16:00）
+  workflow_dispatch:      # 允许手动触发
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup curl and jq
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y curl jq
+
+    - name: Get Bing Wallpaper URL
+      run: |
+        # 获取 Bing API 数据
+        curl -s "https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&uhd=1&uhdwidth=3840&uhdheight=2160" -o bing.json
+        
+        # 解析 JSON 获取图片 URL
+        URL=$(jq -r '.images[0].url' bing.json)
+        FULL_URL="https://cn.bing.com$URL"
+        
+        # 输出调试信息
+        echo "Bing API Response:"
+        cat bing.json
+        echo "Image URL: $FULL_URL"
+        
+        # 将 URL 存入环境变量
+        echo "IMAGE_URL=$FULL_URL" >> $GITHUB_ENV
+
+    - name: Update HTML file
+      run: |
+        # 使用 sed 替换模板中的占位符
+        sed "s|IMAGE_URL_PLACEHOLDER|$IMAGE_URL|g" index.template > index.html
+        
+        # 输出生成的文件内容（用于调试）
+        echo "Generated index.html:"
+        cat index.html
+
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        
+        git add index.html
+        git diff --staged --quiet || git commit -m "🔄 Update Bing wallpaper redirect - $(date +'%Y-%m-%d %H:%M')"
+        git push
