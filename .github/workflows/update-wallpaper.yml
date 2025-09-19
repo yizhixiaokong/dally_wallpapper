@@ -2,7 +2,7 @@ name: Update Bing Wallpaper Redirect
 
 on:
   schedule:
-    - cron: "0 8 * * *" # 每天 UTC 时间 08:00 运行（北京时间 16:00）
+    - cron: "55 1 * * *" # 每天 UTC 时间 01:55 运行（北京时间 09:55）
   workflow_dispatch: # 允许手动触发
   push:
     branches: [main]
