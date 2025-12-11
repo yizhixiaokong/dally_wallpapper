@@ -126,6 +126,7 @@
       .wallpaper-optimized .info-container {
         pointer-events: auto;
       }
+      
     </style>
   </head>
   <body class="wallpaper-optimized">
@@ -138,6 +139,7 @@
         <i class="fas fa-calendar-alt"></i>
         <span id="current-date">2023年9月18日 星期一</span>
       </div>
+      
     </div>
 
     <div class="source">每日壁纸由 Microsoft Bing 提供</div>
@@ -155,6 +157,10 @@
         document.getElementById("current-date").textContent =
           now.toLocaleDateString("zh-CN", options);
       }
+
+      // ===== 配置 (修改 DEFAULT_REFRESH_CRON) =====
+      const DEFAULT_REFRESH_CRON = '0 * * * *';
+
 
       // 从URL参数获取壁纸数据
       function getWallpaperFromUrl() {
@@ -186,15 +192,9 @@
       // 从GitHub API获取壁纸数据
       async function loadWallpaperFromAPI() {
         try {
-          // 这里应该是您的GitHub Pages JSON数据端点
-          const response = await fetch("wallpaper-data.json");
-          const data = await response.json();
-
-          document.body.style.backgroundImage = `url('${data.url}')`;
-          document.getElementById("wallpaper-title").textContent = data.title;
-          document.getElementById("wallpaper-copyright").textContent =
-            data.copyright;
-          document.getElementById("loading").style.display = "none";
+          // fetch wallpaper-data.json (force bypass cache)
+          const data = await fetchWallpaperData({ force: true });
+          setWallpaperFromData(data);
         } catch (error) {
           console.error("获取壁纸数据失败:", error);
           // 使用默认壁纸作为后备
@@ -202,6 +202,132 @@
             'url("https://cn.bing.com/th?id=OHR.ExtremaduraJamon_ZH-CN1559355133_UHD.jpg&rf=LaDigue_UHD.jpg&pid=hp&w=3840&h=2160&rs=1&c=4")';
           document.getElementById("loading").style.display = "none";
         }
+      }
+
+      
+
+      // 通用的 fetch 函数（可选择是否忽略缓存）
+      async function fetchWallpaperData({ force = false } = {}) {
+        const url = 'wallpaper-data.json' + (force ? '?_=' + Date.now() : '');
+        const response = await fetch(url, { cache: force ? 'no-store' : 'default' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return await response.json();
+      }
+
+      // 将 JSON 数据应用到页面（包含图片预加载）
+      function setWallpaperFromData(data) {
+        if (!data || !data.url) return;
+        const currentBg = document.body.style.backgroundImage || '';
+        if (currentBg.indexOf(data.url) !== -1) {
+          // 已经是相同图片，更新文字并返回
+          document.getElementById('wallpaper-title').textContent = data.title || '';
+          document.getElementById('wallpaper-copyright').textContent = data.copyright || '';
+          document.getElementById('loading').style.display = 'none';
+          return;
+        }
+        const img = new Image();
+        img.onload = () => {
+          document.body.style.backgroundImage = `url('${data.url}')`;
+          document.getElementById('wallpaper-title').textContent = data.title || '';
+          document.getElementById('wallpaper-copyright').textContent = data.copyright || '';
+          document.getElementById('loading').style.display = 'none';
+        };
+        img.onerror = () => {
+          document.getElementById('loading').style.display = 'none';
+        };
+        img.src = data.url;
+      }
+
+      // 自动刷新逻辑（cron-based scheduler）
+      let autoRefreshTimerId = null; // setTimeout id
+
+      // 解析 cron 字段（支持 '*', '*/step', 'a-b', 'a,b,c'）
+      function parseCronField(field, min, max) {
+        const values = new Set();
+        if (field === '*') {
+          for (let i = min; i <= max; i++) values.add(i);
+          return values;
+        }
+        field.split(',').forEach(part => {
+          part = part.trim();
+          const stepMatch = part.match(/^\*\/([0-9]+)$/);
+          if (stepMatch) {
+            const step = parseInt(stepMatch[1], 10);
+            for (let i = min; i <= max; i += step) values.add(i);
+            return;
+          }
+          const rangeMatch = part.match(/^([0-9]+)-([0-9]+)$/);
+          if (rangeMatch) {
+            const start = parseInt(rangeMatch[1], 10);
+            const end = parseInt(rangeMatch[2], 10);
+            for (let i = Math.max(min, start); i <= Math.min(max, end); i++) values.add(i);
+            return;
+          }
+          const numMatch = part.match(/^([0-9]+)$/);
+          if (numMatch) values.add(parseInt(numMatch[1], 10));
+        });
+        return values;
+      }
+
+      // 计算下一个匹配 cron 的时间，返回延迟毫秒；若出错则返回默认 60s
+      function computeNextDelayFromCron(expr) {
+        try {
+          const fields = expr.trim().split(/\s+/);
+          if (fields.length !== 5) throw new Error('cron expression must have 5 fields');
+          const [minField, hourField, domField, monthField, dowField] = fields;
+          const minSet = parseCronField(minField, 0, 59);
+          const hourSet = parseCronField(hourField, 0, 23);
+          const domSet = parseCronField(domField, 1, 31);
+          const monthSet = parseCronField(monthField, 1, 12);
+          const dowSet = parseCronField(dowField, 0, 6); // Sunday=0
+
+          const now = new Date();
+          let t = new Date(now.getTime());
+          t.setSeconds(0, 0);
+          // search up to 366 days ahead
+          for (let i = 0; i < 60 * 24 * 366; i++) {
+            t.setMinutes(t.getMinutes() + 1);
+            const m = t.getMinutes();
+            const h = t.getHours();
+            const day = t.getDate();
+            const month = t.getMonth() + 1; // January is 0
+            const dow = t.getDay();
+            if (minSet.has(m) && hourSet.has(h) && domSet.has(day) && monthSet.has(month) && dowSet.has(dow)) {
+              return t.getTime() - now.getTime();
+            }
+          }
+        } catch (err) {
+          console.error('computeNextDelayFromCron error:', err);
+        }
+        // fallback to 60s
+        return 60 * 1000;
+      }
+
+      async function scheduleNextCronTick(cronExpr) {
+        // clear any existing timer
+        if (autoRefreshTimerId !== null) {
+          clearTimeout(autoRefreshTimerId);
+          autoRefreshTimerId = null;
+        }
+        const delay = computeNextDelayFromCron(cronExpr);
+        autoRefreshTimerId = setTimeout(async () => {
+          try {
+            const data = await fetchWallpaperData({ force: true });
+            setWallpaperFromData(data);
+          } catch (err) {
+            console.error('自动刷新壁纸失败:', err);
+          } finally {
+            // schedule next occurrence
+            scheduleNextCronTick(cronExpr);
+          }
+        }, delay);
+      }
+
+      // 使用 cron 表达式计划自动刷新（支持 URL 参数 ?cron=... 临时覆盖）
+      function initAutoRefresh() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const cronExpr = urlParams.get('cron') || DEFAULT_REFRESH_CRON;
+        scheduleNextCronTick(cronExpr);
       }
 
       // 页面加载时初始化
@@ -213,6 +339,8 @@
           // 如果没有URL参数，尝试从API获取
           loadWallpaperFromAPI();
         }
+
+        initAutoRefresh();
 
         // 添加淡入效果
         setTimeout(() => {
