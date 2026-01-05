@@ -28,20 +28,23 @@ jobs:
 
       - name: Generate JSON data
         run: |
-          # 获取 Bing API 数据
-          # curl -s "https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&uhd=1&uhdwidth=3840&uhdheight=2160" -o bing.json
+          # 获取 Bing API 数据（横屏）
           curl -s "https://global.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&pid=hp&FORM=BEHPTB&uhd=1&uhdwidth=3840&uhdheight=2160&setmkt=zh-CN&setlang=en" -o bing.json
+          # 获取 Bing API 数据（竖屏）
+          curl -s "https://global.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&pid=hp&FORM=BEHPTB&uhd=1&uhdwidth=2160&uhdheight=3840&setmkt=zh-CN&setlang=en" -o bing_portrait.json
 
           # 解析Bing API响应
           TITLE=$(jq -r '.images[0].title' bing.json)
           COPYRIGHT=$(jq -r '.images[0].copyright' bing.json)
           URL="https://cn.bing.com$(jq -r '.images[0].url' bing.json)"
+          PORTRAIT_URL="https://cn.bing.com$(jq -r '.images[0].url' bing_portrait.json)"
 
-          # 创建JSON数据
+          # 创建JSON数据（包含横屏与竖屏 URL）
           echo '{
             "title": "'$TITLE'",
             "copyright": "'$COPYRIGHT'",
             "url": "'$URL'",
+            "portrait_url": "'$PORTRAIT_URL'",
             "date": "'$(date +%Y-%m-%d)'"
           }' > wallpaper-data.json
 
@@ -74,6 +77,6 @@ jobs:
 
           mkdir -p api
           # git add index.html
-          git add wallpaper-data.json api/today.png
+          git add wallpaper-data.json api/today.png api/today_portrait.png
           git diff --staged --quiet || git commit -m "🔄 Update Bing wallpaper redirect - $(date +'%Y-%m-%d %H:%M')"
           git push

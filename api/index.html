@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今日必应壁纸</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #fff;
+            font-family: sans-serif;
+        }
+    </style>
+    <script>
+        function redirect() {
+            // 简单的移动端检测 (包含 Android, iPhone, iPad, iPod, Windows Phone 等)
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            // 获取当前路径的目录部分
+            const path = window.location.pathname;
+            const dir = path.substring(0, path.lastIndexOf('/'));
+            
+            if (isMobile) {
+                // 移动端跳转到竖屏图
+                window.location.replace('today_portrait.png');
+            } else {
+                // PC端跳转到横屏图
+                window.location.replace('today.png');
+            }
+        }
+        
+        // 立即执行重定向
+        redirect();
+    </script>
+</head>
+<body>
+    <p>正在跳转到今日壁纸...</p>
+</body>
+</html>
