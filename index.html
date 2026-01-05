@@ -10,9 +10,10 @@
         padding: 0;
         box-sizing: border-box;
       }
-
+      @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100;200;300;400&display=swap");
       body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        font-family: "Noto Sans SC", "Segoe UI", Tahoma, Geneva, Verdana,
+          sans-serif;
         height: 100vh;
         overflow: hidden;
         color: white;
@@ -126,7 +127,6 @@
       .wallpaper-optimized .info-container {
         pointer-events: auto;
       }
-      
     </style>
   </head>
   <body class="wallpaper-optimized">
@@ -139,7 +139,6 @@
         <i class="fas fa-calendar-alt"></i>
         <span id="current-date">2023年9月18日 星期一</span>
       </div>
-      
     </div>
 
     <div class="source">每日壁纸由 Microsoft Bing 提供</div>
@@ -159,8 +158,7 @@
       }
 
       // ===== 配置 (修改 DEFAULT_REFRESH_CRON) =====
-      const DEFAULT_REFRESH_CRON = '0 * * * *';
-
+      const DEFAULT_REFRESH_CRON = "0 * * * *";
 
       // 从URL参数获取壁纸数据
       function getWallpaperFromUrl() {
@@ -204,12 +202,12 @@
         }
       }
 
-      
-
       // 通用的 fetch 函数（可选择是否忽略缓存）
       async function fetchWallpaperData({ force = false } = {}) {
-        const url = 'wallpaper-data.json' + (force ? '?_=' + Date.now() : '');
-        const response = await fetch(url, { cache: force ? 'no-store' : 'default' });
+        const url = "wallpaper-data.json" + (force ? "?_=" + Date.now() : "");
+        const response = await fetch(url, {
+          cache: force ? "no-store" : "default",
+        });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return await response.json();
       }
@@ -217,23 +215,27 @@
       // 将 JSON 数据应用到页面（包含图片预加载）
       function setWallpaperFromData(data) {
         if (!data || !data.url) return;
-        const currentBg = document.body.style.backgroundImage || '';
+        const currentBg = document.body.style.backgroundImage || "";
         if (currentBg.indexOf(data.url) !== -1) {
           // 已经是相同图片，更新文字并返回
-          document.getElementById('wallpaper-title').textContent = data.title || '';
-          document.getElementById('wallpaper-copyright').textContent = data.copyright || '';
-          document.getElementById('loading').style.display = 'none';
+          document.getElementById("wallpaper-title").textContent =
+            data.title || "";
+          document.getElementById("wallpaper-copyright").textContent =
+            data.copyright || "";
+          document.getElementById("loading").style.display = "none";
           return;
         }
         const img = new Image();
         img.onload = () => {
           document.body.style.backgroundImage = `url('${data.url}')`;
-          document.getElementById('wallpaper-title').textContent = data.title || '';
-          document.getElementById('wallpaper-copyright').textContent = data.copyright || '';
-          document.getElementById('loading').style.display = 'none';
+          document.getElementById("wallpaper-title").textContent =
+            data.title || "";
+          document.getElementById("wallpaper-copyright").textContent =
+            data.copyright || "";
+          document.getElementById("loading").style.display = "none";
         };
         img.onerror = () => {
-          document.getElementById('loading').style.display = 'none';
+          document.getElementById("loading").style.display = "none";
         };
         img.src = data.url;
       }
@@ -244,11 +246,11 @@
       // 解析 cron 字段（支持 '*', '*/step', 'a-b', 'a,b,c'）
       function parseCronField(field, min, max) {
         const values = new Set();
-        if (field === '*') {
+        if (field === "*") {
           for (let i = min; i <= max; i++) values.add(i);
           return values;
         }
-        field.split(',').forEach(part => {
+        field.split(",").forEach((part) => {
           part = part.trim();
           const stepMatch = part.match(/^\*\/([0-9]+)$/);
           if (stepMatch) {
@@ -260,7 +262,8 @@
           if (rangeMatch) {
             const start = parseInt(rangeMatch[1], 10);
             const end = parseInt(rangeMatch[2], 10);
-            for (let i = Math.max(min, start); i <= Math.min(max, end); i++) values.add(i);
+            for (let i = Math.max(min, start); i <= Math.min(max, end); i++)
+              values.add(i);
             return;
           }
           const numMatch = part.match(/^([0-9]+)$/);
@@ -273,7 +276,8 @@
       function computeNextDelayFromCron(expr) {
         try {
           const fields = expr.trim().split(/\s+/);
-          if (fields.length !== 5) throw new Error('cron expression must have 5 fields');
+          if (fields.length !== 5)
+            throw new Error("cron expression must have 5 fields");
           const [minField, hourField, domField, monthField, dowField] = fields;
           const minSet = parseCronField(minField, 0, 59);
           const hourSet = parseCronField(hourField, 0, 23);
@@ -292,12 +296,18 @@
             const day = t.getDate();
             const month = t.getMonth() + 1; // January is 0
             const dow = t.getDay();
-            if (minSet.has(m) && hourSet.has(h) && domSet.has(day) && monthSet.has(month) && dowSet.has(dow)) {
+            if (
+              minSet.has(m) &&
+              hourSet.has(h) &&
+              domSet.has(day) &&
+              monthSet.has(month) &&
+              dowSet.has(dow)
+            ) {
               return t.getTime() - now.getTime();
             }
           }
         } catch (err) {
-          console.error('computeNextDelayFromCron error:', err);
+          console.error("computeNextDelayFromCron error:", err);
         }
         // fallback to 60s
         return 60 * 1000;
@@ -315,7 +325,7 @@
             const data = await fetchWallpaperData({ force: true });
             setWallpaperFromData(data);
           } catch (err) {
-            console.error('自动刷新壁纸失败:', err);
+            console.error("自动刷新壁纸失败:", err);
           } finally {
             // schedule next occurrence
             scheduleNextCronTick(cronExpr);
@@ -326,7 +336,7 @@
       // 使用 cron 表达式计划自动刷新（支持 URL 参数 ?cron=... 临时覆盖）
       function initAutoRefresh() {
         const urlParams = new URLSearchParams(window.location.search);
-        const cronExpr = urlParams.get('cron') || DEFAULT_REFRESH_CRON;
+        const cronExpr = urlParams.get("cron") || DEFAULT_REFRESH_CRON;
         scheduleNextCronTick(cronExpr);
       }
 
