@@ -33,13 +33,13 @@ const path = require("path");
 
     console.log("正在访问（横屏）:", targetUrl);
     const page = await browser.newPage();
-    await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 2 });
+    await page.setViewport({ width: 3840, height: 2160, deviceScaleFactor: 1 });
     await page.goto(targetUrl, { waitUntil: "networkidle2" });
     await page.evaluateHandle("document.fonts.ready");
     await new Promise((r) => setTimeout(r, 4000));
 
-    await page.screenshot({ path: "./api/today.png", type: "png" });
-    console.log("横屏截图已保存到 ./api/today.png");
+    await page.screenshot({ path: "./api/today.jpg", type: "jpeg", quality: 80 });
+    console.log("横屏截图已保存到 ./api/today.jpg");
     await page.close();
 
     // 竖屏截图（如果存在 portrait_url）
@@ -54,14 +54,14 @@ const path = require("path");
 
       console.log("正在访问（竖屏）:", targetUrlP);
       const pageP = await browser.newPage();
-      // 9:16 竖屏分辨率（常见手机竖屏）
-      await pageP.setViewport({ width: 1080, height: 1920, deviceScaleFactor: 2 });
+      // 9:16 竖屏分辨率
+      await pageP.setViewport({ width: 2160, height: 3840, deviceScaleFactor: 1 });
       await pageP.goto(targetUrlP, { waitUntil: "networkidle2" });
       await pageP.evaluateHandle("document.fonts.ready");
       await new Promise((r) => setTimeout(r, 4000));
 
-      await pageP.screenshot({ path: "./api/today_portrait.png", type: "png" });
-      console.log("竖屏截图已保存到 ./api/today_portrait.png");
+      await pageP.screenshot({ path: "./api/today_portrait.jpg", type: "jpeg", quality: 80 });
+      console.log("竖屏截图已保存到 ./api/today_portrait.jpg");
       await pageP.close();
     } else {
       console.log("未找到 portrait_url，跳过竖屏截图");

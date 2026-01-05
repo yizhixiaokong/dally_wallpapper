@@ -77,6 +77,6 @@ jobs:
 
           mkdir -p api
           # git add index.html
-          git add wallpaper-data.json api/today.png api/today_portrait.png
+          git add wallpaper-data.json api/today.jpg api/today_portrait.jpg
           git diff --staged --quiet || git commit -m "🔄 Update Bing wallpaper redirect - $(date +'%Y-%m-%d %H:%M')"
           git push
