@@ -20,6 +20,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
 
+      # --- 第一阶段：获取 Bing 数据并生成 JSON ---
       - name: Setup curl and jq
         run: |
           sudo apt-get update
@@ -44,12 +45,29 @@ jobs:
             "date": "'$(date +%Y-%m-%d)'"
           }' > wallpaper-data.json
 
+      # --- 第二阶段：准备 Node 环境并执行截图 ---
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # 建议使用较新的 LTS 版本
+
+      - name: Install Puppeteer
+        run: |
+          npm init -y
+          npm install puppeteer
+
+      - name: Take Screenshot
+        run: node screenshot.js
+
+
+      # --- 第三阶段：提交并推送更改 ---
       - name: Commit and push changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
 
+          mkdir -p api
           # git add index.html
-          git add wallpaper-data.json
+          git add wallpaper-data.json api/today.png
           git diff --staged --quiet || git commit -m "🔄 Update Bing wallpaper redirect - $(date +'%Y-%m-%d %H:%M')"
           git push
