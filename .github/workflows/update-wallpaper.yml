@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -50,9 +50,9 @@ jobs:
 
       # --- 第二阶段：准备 Node 环境并执行截图 ---
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: '20' # 建议使用较新的 LTS 版本
+          node-version: '24' # 建议使用较新的 LTS 版本
 
       - name: Install Puppeteer
         run: |
