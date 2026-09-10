@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bing每日壁纸</title>
     <style>
+      @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100;200;300;400&display=swap");
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
       }
-      @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100;200;300;400&display=swap");
       body {
         font-family: "Noto Sans SC", "Segoe UI", Tahoma, Geneva, Verdana,
           sans-serif;
@@ -173,13 +173,12 @@
           document.getElementById("loading").style.display = "none";
 
           if (title) {
-            document.getElementById("wallpaper-title").textContent =
-              decodeURIComponent(title);
+            document.getElementById("wallpaper-title").textContent = title;
           }
 
           if (copyright) {
             document.getElementById("wallpaper-copyright").textContent =
-              decodeURIComponent(copyright);
+              copyright;
           }
 
           return true;
@@ -196,11 +195,15 @@
           setWallpaperFromData(data);
         } catch (error) {
           console.error("获取壁纸数据失败:", error);
-          // 使用默认壁纸作为后备
-          document.body.style.backgroundImage =
-            'url("https://cn.bing.com/th?id=OHR.ExtremaduraJamon_ZH-CN1559355133_UHD.jpg&rf=LaDigue_UHD.jpg&pid=hp&w=3840&h=2160&rs=1&c=4")';
-          document.getElementById("loading").style.display = "none";
+          useFallbackWallpaper();
         }
+      }
+
+      // 使用默认壁纸作为后备
+      function useFallbackWallpaper() {
+        document.body.style.backgroundImage =
+          'url("https://cn.bing.com/th?id=OHR.ExtremaduraJamon_ZH-CN1559355133_UHD.jpg&rf=LaDigue_UHD.jpg&pid=hp&w=3840&h=2160&rs=1&c=4")';
+        document.getElementById("loading").style.display = "none";
       }
 
       // 通用的 fetch 函数（可选择是否忽略缓存）
@@ -215,7 +218,10 @@
 
       // 将 JSON 数据应用到页面（包含图片预加载）
       function setWallpaperFromData(data) {
-        if (!data || !data.url) return;
+        if (!data || !data.url) {
+          useFallbackWallpaper();
+          return;
+        }
         const currentBg = document.body.style.backgroundImage || "";
         if (currentBg.indexOf(data.url) !== -1) {
           // 已经是相同图片，更新文字并返回

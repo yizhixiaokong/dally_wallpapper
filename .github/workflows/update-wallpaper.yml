@@ -1,4 +1,4 @@
-name: Update Bing Wallpaper Redirect
+name: Update Bing Wallpaper
 
 on:
   schedule:
@@ -7,56 +7,59 @@ on:
   workflow_dispatch: # 允许手动触发
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: update-wallpaper
+  cancel-in-progress: false
 
 jobs:
-  update:
+  build:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
-        with:
-          token: ${{ secrets.GH_PAT }}
 
-      # --- 第一阶段：获取 Bing 数据并生成 JSON ---
-      - name: Setup curl and jq
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y curl jq
-
+      # --- 第一阶段：抓取 Bing 数据并生成待发布目录 dist/ ---
       - name: Generate JSON data
         run: |
+          mkdir -p dist/api
+          cp index.html dist/
+          cp api/index.html dist/api/
+
           # 获取 Bing API 数据（横屏）
           curl -s "https://global.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&pid=hp&FORM=BEHPTB&uhd=1&uhdwidth=3840&uhdheight=2160&setmkt=zh-CN&setlang=en" -o bing.json
           # 获取 Bing API 数据（竖屏）
           curl -s "https://global.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&pid=hp&FORM=BEHPTB&uhd=1&uhdwidth=2160&uhdheight=3840&setmkt=zh-CN&setlang=en" -o bing_portrait.json
 
-          # 解析Bing API响应
-          TITLE=$(jq -r '.images[0].title' bing.json)
-          COPYRIGHT=$(jq -r '.images[0].copyright' bing.json)
-          URL="https://cn.bing.com$(jq -r '.images[0].url' bing.json)"
-          PORTRAIT_URL="https://cn.bing.com$(jq -r '.images[0].url' bing_portrait.json)"
+          # 用 jq 生成 JSON，标题/版权里的引号不会破坏格式
+          jq -n \
+            --arg title "$(jq -r '.images[0].title' bing.json)" \
+            --arg copyright "$(jq -r '.images[0].copyright' bing.json)" \
+            --arg url "https://cn.bing.com$(jq -r '.images[0].url' bing.json)" \
+            --arg portrait_url "https://cn.bing.com$(jq -r '.images[0].url' bing_portrait.json)" \
+            --arg date "$(TZ=Asia/Shanghai date +%F)" \
+            '{title: $title, copyright: $copyright, url: $url, portrait_url: $portrait_url, date: $date}' \
+            > dist/wallpaper-data.json
 
-          # 创建JSON数据（包含横屏与竖屏 URL）
-          echo '{
-            "title": "'$TITLE'",
-            "copyright": "'$COPYRIGHT'",
-            "url": "'$URL'",
-            "portrait_url": "'$PORTRAIT_URL'",
-            "date": "'$(date +%Y-%m-%d)'"
-          }' > wallpaper-data.json
+          cat dist/wallpaper-data.json
 
       # --- 第二阶段：准备 Node 环境并执行截图 ---
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '24' # 建议使用较新的 LTS 版本
+          node-version: '24'
 
       - name: Install Puppeteer
         run: |
           npm init -y
           npm install puppeteer
-      
+
       - name: Install Noto Sans SC Fonts
         run: |
           sudo apt-get update
@@ -64,17 +67,28 @@ jobs:
           fc-cache -f -v  # 强制刷新字体缓存
 
       - name: Take Screenshot
-        run: node screenshot.js
+        run: node screenshot.js dist/wallpaper-data.json dist/api
 
-
-      # --- 第三阶段：提交并推送更改 ---
-      - name: Commit and push changes
+      - name: Verify screenshots
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+          for f in dist/api/today.jpg dist/api/today_portrait.jpg; do
+            size=$(stat -c%s "$f" 2>/dev/null || echo 0)
+            if [ "$size" -lt 100000 ]; then
+              echo "::error::$f 体积异常（$size 字节），疑似未渲染完成"
+              exit 1
+            fi
+          done
+          ls -lh dist/api
 
-          mkdir -p api
-          # git add index.html
-          git add wallpaper-data.json api/today.jpg api/today_portrait.jpg
-          git diff --staged --quiet || git commit -m "🔄 Update Bing wallpaper redirect - $(date +'%Y-%m-%d %H:%M')"
-          git push
+      # --- 第三阶段：发布到 GitHub Pages（产物不进 git） ---
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

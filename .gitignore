@@ -17,3 +17,11 @@ pnpm-lock.yaml
 
 # OS
 .DS_Store
+
+# 构建产物（由 CI 生成发布，不入库）
+/dist/
+/wallpaper-data.json
+/api/today.jpg
+/api/today_portrait.jpg
+/bing.json
+/bing_portrait.json
