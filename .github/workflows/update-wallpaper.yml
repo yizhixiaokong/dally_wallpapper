@@ -4,6 +4,13 @@ on:
   schedule:
     - cron: "2 7 * * *" # 每天 UTC 时间 07:02 运行（北京时间 15:02）
     - cron: "2 16 * * *" # 每天 UTC 时间 16:02 运行（北京时间 00:02）
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "api/index.html"
+      - "screenshot.js"
+      - ".github/workflows/update-wallpaper.yml"
   workflow_dispatch: # 允许手动触发
 
 permissions:

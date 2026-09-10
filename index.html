@@ -17,6 +17,8 @@
         height: 100vh;
         overflow: hidden;
         color: white;
+        /* 没有背景图时的兜底底色，避免白底白字 */
+        background-color: #101418;
         text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7), 0 0 1px #222, 0 0 2px #222;
         display: flex;
         flex-direction: column;
@@ -25,6 +27,17 @@
         background-position: center;
         transition: background-image 1s ease-in-out;
         position: relative;
+        /* 用 CSS 做淡入：JS 出错时元素落回默认 opacity 1，不会白屏 */
+        animation: fade-in 0.5s ease-in 0.3s both;
+      }
+
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
       }
 
       body::before {
@@ -242,6 +255,11 @@
           document.getElementById("loading").style.display = "none";
         };
         img.onerror = () => {
+          // 首次加载失败时没有任何背景，白底白字会是一片空白
+          if (!document.body.style.backgroundImage) {
+            useFallbackWallpaper();
+            return;
+          }
           document.getElementById("loading").style.display = "none";
         };
         img.src = data.url;
@@ -358,16 +376,7 @@
         }
 
         initAutoRefresh();
-
-        // 添加淡入效果
-        setTimeout(() => {
-          document.body.style.opacity = 1;
-        }, 300);
       };
-
-      // 初始隐藏页面，加载完成后淡入
-      document.body.style.opacity = 0;
-      document.body.style.transition = "opacity 0.5s ease-in";
     </script>
 
     <!-- 使用Font Awesome图标 -->
