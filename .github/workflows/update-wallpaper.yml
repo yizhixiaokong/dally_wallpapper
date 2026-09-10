@@ -1,0 +1,80 @@
+name: Update Bing Wallpaper Redirect
+
+on:
+  schedule:
+    - cron: "2 7 * * *" # 每天 UTC 时间 07:02 运行（北京时间 15:02）
+    - cron: "2 16 * * *" # 每天 UTC 时间 16:02 运行（北京时间 00:02）
+  workflow_dispatch: # 允许手动触发
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      # --- 第一阶段：获取 Bing 数据并生成 JSON ---
+      - name: Setup curl and jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl jq
+
+      - name: Generate JSON data
+        run: |
+          # 获取 Bing API 数据（横屏）
+          curl -s "https://global.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&pid=hp&FORM=BEHPTB&uhd=1&uhdwidth=3840&uhdheight=2160&setmkt=zh-CN&setlang=en" -o bing.json
+          # 获取 Bing API 数据（竖屏）
+          curl -s "https://global.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&pid=hp&FORM=BEHPTB&uhd=1&uhdwidth=2160&uhdheight=3840&setmkt=zh-CN&setlang=en" -o bing_portrait.json
+
+          # 解析Bing API响应
+          TITLE=$(jq -r '.images[0].title' bing.json)
+          COPYRIGHT=$(jq -r '.images[0].copyright' bing.json)
+          URL="https://cn.bing.com$(jq -r '.images[0].url' bing.json)"
+          PORTRAIT_URL="https://cn.bing.com$(jq -r '.images[0].url' bing_portrait.json)"
+
+          # 创建JSON数据（包含横屏与竖屏 URL）
+          echo '{
+            "title": "'$TITLE'",
+            "copyright": "'$COPYRIGHT'",
+            "url": "'$URL'",
+            "portrait_url": "'$PORTRAIT_URL'",
+            "date": "'$(date +%Y-%m-%d)'"
+          }' > wallpaper-data.json
+
+      # --- 第二阶段：准备 Node 环境并执行截图 ---
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24' # 建议使用较新的 LTS 版本
+
+      - name: Install Puppeteer
+        run: |
+          npm init -y
+          npm install puppeteer
+      
+      - name: Install Noto Sans SC Fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-cjk
+          fc-cache -f -v  # 强制刷新字体缓存
+
+      - name: Take Screenshot
+        run: node screenshot.js
+
+
+      # --- 第三阶段：提交并推送更改 ---
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          mkdir -p api
+          # git add index.html
+          git add wallpaper-data.json api/today.jpg api/today_portrait.jpg
+          git diff --staged --quiet || git commit -m "🔄 Update Bing wallpaper redirect - $(date +'%Y-%m-%d %H:%M')"
+          git push

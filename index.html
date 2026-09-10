@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bing每日壁纸</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100;200;300;400&display=swap");
+      body {
+        font-family: "Noto Sans SC", "Segoe UI", Tahoma, Geneva, Verdana,
+          sans-serif;
+        height: 100vh;
+        overflow: hidden;
+        color: white;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7), 0 0 1px #222, 0 0 2px #222;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background-size: cover;
+        background-position: center;
+        transition: background-image 1s ease-in-out;
+        position: relative;
+      }
+
+      body::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.7) 0%,
+          transparent 30%,
+          transparent 70%,
+          rgba(0, 0, 0, 0.4) 100%
+        );
+        z-index: 0;
+      }
+
+      .info-container {
+        position: relative;
+        z-index: 1;
+        padding: 0 20px;
+        max-width: 600px;
+        margin: auto;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 32px;
+      }
+
+      .title {
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), 0 0 2px #222, 0 0 1px #222;
+        font-size: 3.2rem;
+        font-weight: 200;
+        margin-bottom: 0;
+        line-height: 1.1;
+        letter-spacing: 2.5px;
+        text-align: center;
+        opacity: 0.65;
+      }
+
+      .copyright {
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 1px #222;
+        font-size: 1rem;
+        margin-bottom: 0;
+        opacity: 0.65;
+        font-weight: 250;
+        letter-spacing: 1px;
+        text-align: center;
+      }
+
+      .date {
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 1px #222;
+        font-size: 0.95rem;
+        opacity: 0.65;
+        font-weight: 250;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 0;
+        letter-spacing: 1px;
+      }
+
+      .date i {
+        margin-right: 8px;
+      }
+
+      .source {
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 1px #222;
+        position: absolute;
+        bottom: 58px;
+        right: 15px;
+        font-size: 0.8rem;
+        opacity: 0.6;
+        z-index: 1;
+      }
+
+      
+      .loading {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 1.2rem;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 15px 25px;
+        border-radius: 8px;
+        z-index: 10;
+      }
+
+      .wallpaper-optimized {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        pointer-events: none;
+      }
+
+      .wallpaper-optimized .info-container {
+        pointer-events: auto;
+      }
+    </style>
+  </head>
+  <body class="wallpaper-optimized">
+    <div class="loading" id="loading">正在加载今日壁纸...</div>
+
+    <div class="info-container">
+      <h1 class="title" id="wallpaper-title">Daily Wallpaper</h1>
+      <p class="copyright" id="wallpaper-copyright">每天都是更好的一天</p>
+      <div class="date">
+        <i class="fas fa-calendar-alt"></i>
+        <span id="current-date">2023年9月18日 星期一</span>
+      </div>
+    </div>
+
+    <div class="source">每日壁纸由 Microsoft Bing 提供</div>
+
+    <script>
+      // 设置当前日期
+      function setCurrentDate() {
+        const now = new Date();
+        const options = {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          weekday: "long",
+        };
+        document.getElementById("current-date").textContent =
+          now.toLocaleDateString("zh-CN", options);
+      }
+
+      // ===== 配置 (修改 DEFAULT_REFRESH_CRON) =====
+      const DEFAULT_REFRESH_CRON = "0 * * * *";
+
+      // 从URL参数获取壁纸数据
+      function getWallpaperFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const imageUrl = urlParams.get("image");
+        const title = urlParams.get("title");
+        const copyright = urlParams.get("copyright");
+
+        if (imageUrl) {
+          document.body.style.backgroundImage = `url('${imageUrl}')`;
+          document.getElementById("loading").style.display = "none";
+
+          if (title) {
+            document.getElementById("wallpaper-title").textContent =
+              decodeURIComponent(title);
+          }
+
+          if (copyright) {
+            document.getElementById("wallpaper-copyright").textContent =
+              decodeURIComponent(copyright);
+          }
+
+          return true;
+        }
+
+        return false;
+      }
+
+      // 从GitHub API获取壁纸数据
+      async function loadWallpaperFromAPI() {
+        try {
+          // fetch wallpaper-data.json (force bypass cache)
+          const data = await fetchWallpaperData({ force: true });
+          setWallpaperFromData(data);
+        } catch (error) {
+          console.error("获取壁纸数据失败:", error);
+          // 使用默认壁纸作为后备
+          document.body.style.backgroundImage =
+            'url("https://cn.bing.com/th?id=OHR.ExtremaduraJamon_ZH-CN1559355133_UHD.jpg&rf=LaDigue_UHD.jpg&pid=hp&w=3840&h=2160&rs=1&c=4")';
+          document.getElementById("loading").style.display = "none";
+        }
+      }
+
+      // 通用的 fetch 函数（可选择是否忽略缓存）
+      async function fetchWallpaperData({ force = false } = {}) {
+        const url = "wallpaper-data.json" + (force ? "?_=" + Date.now() : "");
+        const response = await fetch(url, {
+          cache: force ? "no-store" : "default",
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return await response.json();
+      }
+
+      // 将 JSON 数据应用到页面（包含图片预加载）
+      function setWallpaperFromData(data) {
+        if (!data || !data.url) return;
+        const currentBg = document.body.style.backgroundImage || "";
+        if (currentBg.indexOf(data.url) !== -1) {
+          // 已经是相同图片，更新文字并返回
+          document.getElementById("wallpaper-title").textContent =
+            data.title || "";
+          document.getElementById("wallpaper-copyright").textContent =
+            data.copyright || "";
+          document.getElementById("loading").style.display = "none";
+          return;
+        }
+        const img = new Image();
+        img.onload = () => {
+          document.body.style.backgroundImage = `url('${data.url}')`;
+          document.getElementById("wallpaper-title").textContent =
+            data.title || "";
+          document.getElementById("wallpaper-copyright").textContent =
+            data.copyright || "";
+          document.getElementById("loading").style.display = "none";
+        };
+        img.onerror = () => {
+          document.getElementById("loading").style.display = "none";
+        };
+        img.src = data.url;
+      }
+
+      // 自动刷新逻辑（cron-based scheduler）
+      let autoRefreshTimerId = null; // setTimeout id
+
+      // 解析 cron 字段（支持 '*', '*/step', 'a-b', 'a,b,c'）
+      function parseCronField(field, min, max) {
+        const values = new Set();
+        if (field === "*") {
+          for (let i = min; i <= max; i++) values.add(i);
+          return values;
+        }
+        field.split(",").forEach((part) => {
+          part = part.trim();
+          const stepMatch = part.match(/^\*\/([0-9]+)$/);
+          if (stepMatch) {
+            const step = parseInt(stepMatch[1], 10);
+            for (let i = min; i <= max; i += step) values.add(i);
+            return;
+          }
+          const rangeMatch = part.match(/^([0-9]+)-([0-9]+)$/);
+          if (rangeMatch) {
+            const start = parseInt(rangeMatch[1], 10);
+            const end = parseInt(rangeMatch[2], 10);
+            for (let i = Math.max(min, start); i <= Math.min(max, end); i++)
+              values.add(i);
+            return;
+          }
+          const numMatch = part.match(/^([0-9]+)$/);
+          if (numMatch) values.add(parseInt(numMatch[1], 10));
+        });
+        return values;
+      }
+
+      // 计算下一个匹配 cron 的时间，返回延迟毫秒；若出错则返回默认 60s
+      function computeNextDelayFromCron(expr) {
+        try {
+          const fields = expr.trim().split(/\s+/);
+          if (fields.length !== 5)
+            throw new Error("cron expression must have 5 fields");
+          const [minField, hourField, domField, monthField, dowField] = fields;
+          const minSet = parseCronField(minField, 0, 59);
+          const hourSet = parseCronField(hourField, 0, 23);
+          const domSet = parseCronField(domField, 1, 31);
+          const monthSet = parseCronField(monthField, 1, 12);
+          const dowSet = parseCronField(dowField, 0, 6); // Sunday=0
+
+          const now = new Date();
+          let t = new Date(now.getTime());
+          t.setSeconds(0, 0);
+          // search up to 366 days ahead
+          for (let i = 0; i < 60 * 24 * 366; i++) {
+            t.setMinutes(t.getMinutes() + 1);
+            const m = t.getMinutes();
+            const h = t.getHours();
+            const day = t.getDate();
+            const month = t.getMonth() + 1; // January is 0
+            const dow = t.getDay();
+            if (
+              minSet.has(m) &&
+              hourSet.has(h) &&
+              domSet.has(day) &&
+              monthSet.has(month) &&
+              dowSet.has(dow)
+            ) {
+              return t.getTime() - now.getTime();
+            }
+          }
+        } catch (err) {
+          console.error("computeNextDelayFromCron error:", err);
+        }
+        // fallback to 60s
+        return 60 * 1000;
+      }
+
+      async function scheduleNextCronTick(cronExpr) {
+        // clear any existing timer
+        if (autoRefreshTimerId !== null) {
+          clearTimeout(autoRefreshTimerId);
+          autoRefreshTimerId = null;
+        }
+        const delay = computeNextDelayFromCron(cronExpr);
+        autoRefreshTimerId = setTimeout(async () => {
+          try {
+            const data = await fetchWallpaperData({ force: true });
+            setWallpaperFromData(data);
+          } catch (err) {
+            console.error("自动刷新壁纸失败:", err);
+          } finally {
+            // schedule next occurrence
+            scheduleNextCronTick(cronExpr);
+          }
+        }, delay);
+      }
+
+      // 使用 cron 表达式计划自动刷新（支持 URL 参数 ?cron=... 临时覆盖）
+      function initAutoRefresh() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const cronExpr = urlParams.get("cron") || DEFAULT_REFRESH_CRON;
+        scheduleNextCronTick(cronExpr);
+      }
+
+      // 页面加载时初始化
+      window.onload = function () {
+        setCurrentDate();
+
+        // 首先尝试从URL参数获取壁纸数据
+        if (!getWallpaperFromUrl()) {
+          // 如果没有URL参数，尝试从API获取
+          loadWallpaperFromAPI();
+        }
+
+        initAutoRefresh();
+
+        // 添加淡入效果
+        setTimeout(() => {
+          document.body.style.opacity = 1;
+        }, 300);
+      };
+
+      // 初始隐藏页面，加载完成后淡入
+      document.body.style.opacity = 0;
+      document.body.style.transition = "opacity 0.5s ease-in";
+    </script>
+
+    <!-- 使用Font Awesome图标 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+  </body>
+</html>

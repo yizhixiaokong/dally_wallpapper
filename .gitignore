@@ -1,0 +1,19 @@
+# Basic .gitignore for this Node project
+
+# dependencies
+node_modules/
+
+# package-related lockfiles and logs
+package.json
+package-lock.json
+npm-debug.log*
+yarn-error.log*
+yarn-debug.log*
+yarn.lock
+pnpm-lock.yaml
+
+# environment files
+.env
+
+# OS
+.DS_Store
