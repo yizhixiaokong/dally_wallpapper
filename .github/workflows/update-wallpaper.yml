@@ -65,7 +65,8 @@ jobs:
       - name: Install Puppeteer
         run: |
           npm init -y
-          npm install puppeteer
+          npm install puppeteer@25
+          npm ls puppeteer --depth=0
 
       - name: Install Noto Sans SC Fonts
         run: |
