@@ -68,3 +68,4 @@ node screenshot.js [数据文件] [输出目录]    # 默认 wallpaper-data.json
 - **Pages 的 Source 必须是 `GitHub Actions`**。改回 `Deploy from a branch` 会导致产物缺失 —— 图片和 JSON 都不在 git 里。
 - 改动不在 `push` 白名单里的文件（比如本文件）不会触发部署，需要手动 `Run workflow`。
 - 截图流程失败时（图片加载超时、产出文件小于 100KB），任务会直接报错且**不会覆盖线上版本**，站点保持上一次成功的部署。
+- **仓库 60 天无提交时，GitHub 会自动禁用所有定时工作流**（`state: disabled_inactivity`，站点会静止在最后一次部署的壁纸上）。`keepalive.yml` 每周检查一次、距上次提交满 30 天就提交一个时间戳，避免再发生；手动救火用 `gh workflow enable "Update Bing Wallpaper"` 再 `gh workflow run`，**不要 rerun 失败的 run**（重跑会重复上传 `github-pages` artifact，`deploy-pages` 报 “Multiple artifacts”）。

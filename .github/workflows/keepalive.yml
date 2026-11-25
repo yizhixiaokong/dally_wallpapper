@@ -1,0 +1,45 @@
+name: Keepalive
+
+# GitHub 会在「仓库 60 天无提交」时自动禁用所有定时工作流（update-wallpaper 就是这么停的）。
+# 这里每周检查一次，只要距上一次提交满 30 天就写一个时间戳文件提交上去，
+# 让 60 天计数器一直归零。实际提交频率约每月一次，但一年有 52 次补救机会。
+
+on:
+  schedule:
+    - cron: "23 3 * * 1" # 每周一 UTC 03:23（北京时间 11:23）
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: keepalive
+  cancel-in-progress: false
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Commit keepalive stamp if repo has been quiet
+        run: |
+          last=$(git log -1 --format=%ct)
+          now=$(date +%s)
+          days=$(( (now - last) / 86400 ))
+          echo "距上次提交 ${days} 天"
+
+          # 手动触发时总是提交，方便验证；定时触发时只在满 30 天时提交
+          if [ "${days}" -lt 30 ] && [ "${GITHUB_EVENT_NAME}" = "schedule" ]; then
+            echo "30 天内已有提交，跳过"
+            exit 0
+          fi
+
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > .github/keepalive
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/keepalive
+          git commit -m "chore: keepalive $(date -u +%F)"
+          git push
